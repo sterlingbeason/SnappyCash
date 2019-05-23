@@ -1,0 +1,263 @@
+.bchfound {
+}
+
+.bchouter {
+    position: relative;
+    display: inline-block;
+    height: 1em;
+    width: 2.2em;
+    margin-left: 0.1em;
+    cursor: pointer;
+}
+
+.bchinner {
+    position: absolute;
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+    box-sizing: border-box;
+    border: 1px solid black;
+    border-radius: 50%;
+    transition: all 0.4s;
+    box-shadow: 0 0 0 #888888;
+    background-color: white;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.bchinner.bch-qr {
+    top: 0;
+    left: 0;
+}
+
+.bchinner.bch-badger {
+    top: 0;
+    right: 0;
+    font-family: "Ubuntu", Arial, sans-serif;
+    font-weight: normal;
+    word-wrap: none;
+    white-space: nowrap;
+}
+
+.bch-badger.bch-badger-blocked::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    white-space: pre-wrap;
+    box-sizing: border-box;
+    padding: 2em 0.25em;
+    font-size: 0.85em;
+    text-align: center;
+    content: "Unable to access Badger Wallet :/"
+}
+
+.bch-badger::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1.05em;
+    height: 1.1em;
+    content: '\20BF';
+    color: #ffffff;
+    font-size: 0.85em;
+    font-weight: bold;
+    line-height: 1.1em;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #f7941d;
+    transform: rotate(-18deg);
+}
+
+.bchouter:hover {
+    z-index: 9999;
+}
+
+.bchinner:hover {
+    height: 8em;
+    width: 8em;
+    box-shadow: 0.3em 0.6em 1.1em #888888;
+    z-index: 9999;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.bchinner.bch-qr:hover {
+    top: -3.5em;
+    left: -3.5em;
+    cursor: none;
+}
+
+.bchinner.bch-badger:hover {
+    top: -3.5em;
+    right: -3.5em;
+    cursor: auto;
+}
+
+.bchinner.bch-badger:hover::after {
+    display: none;
+}
+
+.bchinner svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+}
+
+.bch-badger-title {
+    display: block;
+    width: 100%;
+    padding: 0.25em 0;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #ffffff;
+    background-color: #f7941d;
+    word-wrap: none;
+}
+
+.bch-badger-balance-container {
+    display: block;
+    text-align: center;
+    margin: 0.25em 0;
+    font-size: 0.65em;
+    line-height: 0.65em;
+    color: #212121;
+}
+
+.bch-badger-price {
+    display: block;
+    margin-bottom: 0.50em;
+    text-align: center;
+    font-size: 0.75em;
+    color: #212121;
+    line-height: 0.65;
+}
+
+.bch-badger-input {
+    box-sizing: border-box;
+    padding: 0 !important;
+    width: 80%;
+    max-width: 80%;
+    margin: 0.75em 0;
+    margin-left: 10%;
+    text-align: center;
+    font-size: 1em;
+    line-height: 1.5em;
+    max-height: 1.5em;
+    color: #818892;
+    background-color: #f9f6f0;
+    border: 1px solid #ececec;
+    border-radius: 6px;
+}
+
+.bch-badger-btn {
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: bold;
+    line-height: 1.5em;
+    color: #ffffff;
+    background-color: #f7941d;
+    box-shadow: 2px 2px 2px #a8adb4;
+    transition: 0.2s all;
+    cursor: pointer;
+}
+
+.bch-badger-btn:not(.bch-badger-btn-disabled):hover {
+    transform: scale(1.05);
+}
+
+.bch-badger-btn-disabled {
+    background-color: #a8adb4;
+}
+
+
+/* TOAST */
+div#bch-toast-container {
+    box-sizing: border-box;
+    color: rgba(0, 0, 0, 0.87);
+    display: block;
+    font-family: sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue";
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 25.6px;
+    max-width: 86%;
+    position: fixed;
+    right: 74.9px;
+    top: 72.3px;
+    z-index: 10000;
+}
+
+div#bch-toast-container div {
+    align-items: center;
+    background-color: rgb(50, 50, 50);
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    box-shadow: rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 3px 1px -2px, rgba(0, 0, 0, 0.2) 0px 1px 5px 0px;
+    box-sizing: border-box;
+    color: rgb(255, 255, 255);
+    cursor: default;
+    font-size: 15.95px;
+    font-weight: 300;
+    display: flex;
+    height: 48px;
+    line-height: 23.9333px;
+    margin-top: 10px;
+    max-width: 100%;
+    min-height: 48px;
+    opacity: 0.0;
+    padding-bottom: 10px;
+    padding-left: 25px;
+    padding-right: 25px;
+    padding-top: 10px;
+    position: relative;
+    top: 0px;
+    width: 295px;
+    animation: bchtoast 10s forwards;
+}
+
+div#bch-toast-container a {
+    padding-left: 25px;
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+div#bch-toast-container div::before {
+    background:  url('data:image/png;base64,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');
+    background-size: 100% 100%;
+    width: 1em;
+    height: 1em;
+    margin-right: 25px;
+    display: inline-block;
+    content: '';
+}
+
+@keyframes bchtoast {
+    0% {
+        top: 40px;
+        opacity: 0.0;
+    }
+    7% {
+        top: 0;
+        opacity: 1.0;
+    }
+    92% {
+        top: 0;
+        opacity: 1.0;
+    }
+    99% {
+        top: -40px;
+        opacity: 0.0;
+    }
+    100% {
+        display: none;
+    }
+}
