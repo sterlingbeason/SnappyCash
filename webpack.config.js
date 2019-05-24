@@ -13,6 +13,7 @@ module.exports = (env, argv) => ({
         filename: '[name].bundle.js'
     },
     mode: argv.mode || 'development',
+    devtool: argv.mode === 'production' ? '' : 'source-map',
     module: {
         rules: [
             {
