@@ -5,8 +5,8 @@ const style = require('./style.css');
 
 const browser = chrome || browser;
 
-let settings;
-let isBadgerInstalled = false;
+let settings; // extension settings
+let isBadgerInstalled = false; // Badger Wallet API on page test result
 let toastContainer; // transaction message will go here after inserted to page
 let url = new URL(location);
 
@@ -29,6 +29,7 @@ browser.runtime.onMessage.addListener(msg => {
             let toastContent = `${value} ($${price.toFixed(2)}) <a href='https://explorer.bitcoin.com/bch/tx/${tx}' target='_blank'>view</a>`;
             insertToastMessage(toastContainer, toastContent);
             break;
+
         case 'subscriptionExpired':
             let address = msg.address;
             deactivateListeningAttr(address);
@@ -45,11 +46,12 @@ async function main() {
             (async () => {
                 style.use(); // insert css style sheet
             })();
+
+            toastContainer = insertToastContainer();
         }
 
         // convert if setting true
         if(settings.convertAuto) {
-            toastContainer = insertToastContainer();
             
             startObserver();
 
@@ -61,7 +63,7 @@ async function main() {
                 // badger api test
                 insertBadgerTest();
                 
-                // continue once inject script can check badger status
+                // allow time to inject script and check badger status 
                 setTimeout(function() {
                     try {
                         isBadgerInstalled = document.querySelector('#badger-check').value === 'true';
@@ -76,15 +78,13 @@ async function main() {
                         console.log('error testing badger api', error);
                     }
                     
-                }, 1000); // FIX ME, timeout to wait for badger check to complete
+                }, 500);
             }
         }
         
         // convert on selection events if setting true
         if(settings.convertSelection) {
-            console.log('slection conversion enabled');
-
-            toastContainer = insertToastContainer();
+            console.log('selection conversion enabled');
             
             document.addEventListener('mouseup', function(e) {
                 let selection = window.getSelection();
