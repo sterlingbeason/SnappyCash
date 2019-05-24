@@ -10,7 +10,7 @@ const browser = chrome || browser;
 const typeNumber = 4;
 const errorCorrectionLevel = 'L';
 
-const ignoreNodeList = ['SCRIPT', 'COMMENT', 'STYLE', 'DIV']; // ignore these textNodes Parents
+const ignoreNodeList = ['SCRIPT', 'COMMENT', 'STYLE']; // ignore these textNodes Parents
 //const regexBCH = new RegExp(/\b((bitcoincash:)?(q|p)[a-z0-9]{41})\b(.*)/s);
 //const regexBCHExact = new RegExp(/\b((bitcoincash:)?(q|p)[a-z0-9]{41})\b/);
 
@@ -154,11 +154,14 @@ function quickFilterNode(node) {
                             ignoreNodeList.indexOf(node.parentNode.nodeName) > -1 || // check if in ignoreNodeList
                             node.length < 35 ||  // arbitrary too short for address 
                             node.data.search(regexBCHExact) < 0 || // address found in text
-                            node.parentNode.hasOwnProperty('contentEditable'); // elements that act as inputs (likely would be a div already filterd in ignore list)
+                            (node.parentNode.hasOwnProperty('contentEditable') && node.parentNode.contentEditable === 'true'); // elements that act as inputs
         return returnValue;
     } catch (error) {
+        // error filtering. reject default
         console.log('error filtering node', error);
         console.log(node);
+
+        return false;
     }
 }
 
