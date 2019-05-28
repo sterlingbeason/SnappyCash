@@ -28,7 +28,7 @@ export function firstInstall() {
     const initialSettings = {
         settings: {
             convertAuto: true, // whether to convert bch addresses on page load
-            convertSelection: false, // whether to watch selections for bch addresses to convert
+            convertSelection: true, // whether to watch selections for bch addresses to convert
             integrateBadger: true, // whether to include badger option in conversion
             // disable extension on these (sub)domains
             ignoreDomains: [

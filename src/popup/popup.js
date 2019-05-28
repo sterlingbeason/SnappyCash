@@ -20,20 +20,12 @@ function updateCurrentUrl() {
 // checkbox change settings
 pageElements.convertAutoCheckbox.addEventListener('change', function() {
     settings.convertAuto = this.checked;
-    // disable conversion on selection if auto
-    if(this.checked) {
-        pageElements.convertSelectionCheckbox.checked = false;
-        settings.convertSelection = false;
-    }
+    
     saveSettings();
 });
 pageElements.convertSelectionCheckbox.addEventListener('change', function() {
     settings.convertSelection = this.checked;
-    // disable conversion on auto if selection setting true
-    if(this.checked) {
-        pageElements.convertAutoCheckbox.checked = false;
-        settings.convertAuto = false;
-    }
+
     saveSettings();
 });
 pageElements.integrateBadgerCheckbox.addEventListener('change', function() {

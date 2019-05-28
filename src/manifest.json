@@ -1,7 +1,10 @@
 {
+  "manifest_version": 2,
+  "default_locale": "en",
   "name": "Snappy Cash",
   "description": "Enhances Bitcoin Cash plain-text addresses displayed on page with scannable QR codes for desktop tipping via mobile wallets and integrated Badger Wallet widgets.",
   "version": "0.0.1",
+  "homepage": "https://github.com/sterlingbeason/SnappyCash",
   "content_scripts": [
     {
       "matches": ["*://*/*"],
@@ -21,7 +24,6 @@
   "icons": {
     "128": "icons/icon.png"
   },
-  "manifest_version": 2,
   "permissions": [
     "activeTab",
     "tabs",
