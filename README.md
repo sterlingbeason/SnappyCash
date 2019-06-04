@@ -28,3 +28,6 @@ Load extension into your browser:
 * [TaoJones](https://twitter.com/ColinAd33006332) for kick-starting the idea
 * [cgcardona](https://twitter.com/cgcardona) helped with library troubleshooting 
 * [Bitcoin.com](https://developer.bitcoin.com) developer packages
+
+## Tipping
+bitcoincash:qqxgjv4erfayzegy3h9p7dv4jja3jf6cs5ygtgk7tr
