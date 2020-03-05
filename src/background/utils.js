@@ -150,7 +150,7 @@ function processTransaction(transaction, transactionSubscribers) {
 export function startTransactionSocket(transactionSubscribers, onClose) {
     let socket = new Socket({callback: () => {
         console.log('connected');
-    }, restURL: 'https://rest.bitcoin.com'});
+    }, wsURL: 'wss://ws.bitcoin.com'});
 
     socket.listen('transactions', (message) => {
         let transaction = JSON.parse(message);
