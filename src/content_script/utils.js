@@ -14,8 +14,13 @@ const ignoreNodeList = ['SCRIPT', 'COMMENT', 'STYLE']; // ignore these textNodes
 //const regexBCH = new RegExp(/\b((bitcoincash:)?(q|p)[a-z0-9]{41})\b(.*)/s);
 //const regexBCHExact = new RegExp(/\b((bitcoincash:)?(q|p)[a-z0-9]{41})\b/);
 
+// Regular Expressions
+// Cash Addresses
 const regexBCH = new RegExp(/\b((q|p)[a-z0-9]{41})\b(.*)/s); // matches BCH address a multiline tail of 0+ characters
 const regexBCHExact = new RegExp(/\b((q|p)[a-z0-9]{41})\b/); // matches BCH address 
+// Cash Accounts
+const regexCashAccount = new RegExp(/\b(\w{1,99}#\d{3,10})\b(.*)/s);
+const regexCashAccountExact = new RegExp(/\b(\w{1,99}#\d{3,10})\b/);
 
 let isBadgerEnabled = false; // user setting. Does the user want to integrate Badger Wallet
 let isBadgerBlocked = false; // tracks our access to Badger Wallet API on page
@@ -35,6 +40,14 @@ function updateBadgeValue() {
     } catch(error) {
         console.log('error updating badge value', error);
     }
+}
+
+function getCashAccountAddress(cashAccount) {
+    return new Promise(function(resolve, reject) {
+        browser.runtime.sendMessage({action: 'cashaccount', cashacount: cashAccount}, (address) => {
+            resolve(address);
+        });
+    });
 }
 
 /**
@@ -152,8 +165,8 @@ function quickFilterNode(node) {
         let returnValue =   typeof node.data === 'undefined' || // assumption textNode should have 'data' property
                             node.parentNode === null || 
                             ignoreNodeList.indexOf(node.parentNode.nodeName) > -1 || // check if in ignoreNodeList
-                            node.length < 35 ||  // arbitrary too short for address 
-                            node.data.search(regexBCHExact) < 0 || // address found in text
+                            node.length < 5 ||  // arbitrary too short for address (changed from 35 to 5 to accomodate cashaccounts)
+                            (node.data.search(regexBCHExact) < 0 && node.data.search(regexCashAccountExact) < 0) || // address or cashaccount found in text
                             (node.parentNode.hasAttribute('contentEditable') && node.parentNode.contentEditable === 'true'); // elements that act as inputs
         return returnValue;
     } catch (error) {
@@ -198,13 +211,13 @@ function subscribeToTransactions(address, callback) {
  * @param {array} m RegExp match object of BCH address and other text
  * @returns {element} Appended options container
  */
-export function convertTextNode(node, m) {
+export function convertTextNode(node, foundObj) {
     let parent = node.parentNode;
     let text = node.data;
 
     //let head =      m[0]; no more head
-    let address =   m[1];
-    let tail =      m[3];
+    let address =   foundObj.address;
+    let tail =      foundObj.tail;
 
     // check if already accounted for
     if(parent.classList.contains('bchfound')){
@@ -262,17 +275,42 @@ export function convertTextNode(node, m) {
  */
 function testNodeForAddress(node) {
     let text = node.data;
-    let m = text.match(regexBCH); // 1: address, 2: q|p, 3: tail
-    if(m) {
-        let foundObj = {
-            textNode: node, // text node where address was found
-            optionsNode: null, // created options container node for QR and Badger
-            address: m[1], // found address
-            m: m
-        }
+    let mBCH = text.match(regexBCH); // Cash Address - 1: address, 2: q|p, 3: tail
+    let mCA = text.match(regexCashAccount); // Cash Account Match - 1: cashaccount, 2: tail
+    let foundObj = {
+        type: null,
+        textNode: node, // text node where address was found
+        optionsNode: null, // created options container node for QR and Badger
+        address: null, // found address
+        cashAccount: null, // found cash account (potentially)
+        tail: null,
+        m: null
+    }
+    if(mBCH) {
+        // found Cash Address
+        foundObj.type = 'cash-address';
+        foundObj.address = mBCH[1];
+        foundObj.tail = mBCH[3];
+        foundObj.m = mBCH;
+        
+        return foundObj;
+    } else if(mCA) {
+        // found potential Cash Account
+        foundObj.type = 'cash-account';
+        foundObj.cashAccount = mCA[1];
+        foundObj.tail = mCA[2];
+        foundObj.m = mCA;
+        
         return foundObj;
     }
     return;
+}
+
+async function registerFoundObject(node, result) {
+    found.push(result);
+    const createdNode = convertTextNode(node, result);
+
+    setFoundObjectOptionsNode(node, createdNode);
 }
 
 /**
@@ -302,10 +340,27 @@ export async function findAndConvert() {
             if(hasNodeBeenConverted(node) === false) {
                 let result = testNodeForAddress(node);
                 if(result) {
-                    found.push(result);
-                    const createdNode = convertTextNode(node, result.m);
+                    // async function to accomodate Cash Account lookup
+                    (async (found, node) => {
+                        // if potential Cash Account then Lookup
+                        // BROKEN
+                        if(result.type === 'cash-account') {
+                            getCashAccountAddress(result.cashAccount)
+                                .then((address) => {
+                                    console.log('done cash account check', result.cashAccount, '=', address);
+                                    
+                                    // check Cash Account address lookup was successful
+                                    if(address) {
+                                        // lookup successful
+                                        result.address = address; // update address property
 
-                    setFoundObjectOptionsNode(node, createdNode);
+                                        registerFoundObject(node, result)
+                                    }
+                                });
+                        } else {
+                            registerFoundObject(node, result)
+                        }
+                    })(found, node);
                 }
             }
         }
@@ -347,17 +402,23 @@ function observerNodeProcess(target) {
         console.log('----new node----');
         let result = testNodeForAddress(target);
         if(result) {
-            found.push(result);
-            const createdNode = convertTextNode(target, result.m);
-            
-            setFoundObjectOptionsNode(node, createdNode);
+            registerFoundObject(target, result);
         }
     } else {
         // node should have address that was previously found
         // check if address is still there
         let foundObj = found[index];
+        let isAddressOrCashAccount;
+
+        if(foundObj.type === 'cash-account') {
+            // Cash Account check
+            isAddressOrCashAccount = target.data.search(foundObj.cashAccount) === -1;
+        } else {
+            // assume Cash Address
+            isAddressOrCashAccount = target.data.search(foundObj.address) === -1;
+        }
         
-        if(target.data.search(foundObj.address) === -1) {
+        if(isAddressOrCashAccount) {
             // address not found where expected
             // remove found obj and options
             console.log('removing options for changed node w/o address');
@@ -400,12 +461,10 @@ export function checkSelection(selection){
     if(!quickFilterNode(node) && hasNodeBeenConverted(node) === false) {
         let result = testNodeForAddress(node);
         if(result) {
-            found.push(result);
-            const createdNode = convertTextNode(node, result.m);
-
-            setFoundObjectOptionsNode(node, createdNode);
-
-            updateBadgeValue();
+            registerFoundObject(node, result)
+                .then(() => {
+                    updateBadgeValue();
+                });
         }
     }
 }

@@ -1,6 +1,6 @@
 require("babel-polyfill");
 
-import { firstInstall, convertToLegacy, startTransactionSocket, updatePrice } from './utils.js';
+import { firstInstall, convertToLegacy, startTransactionSocket, updatePrice, lookupCashAccount } from './utils.js';
 
 const browser = chrome || browser;
 
@@ -58,6 +58,20 @@ browser.runtime.onMessage.addListener((msg, sender, callback) => {
                 console.log('old price');
                 callback(bchPrice.price);
             }
+            break;
+        
+        case 'cashaccount':
+            let potentialCashAccount = msg.cashacount;
+            console.log('cashaccount?', potentialCashAccount);
+            lookupCashAccount(potentialCashAccount)
+                .then((address) => {
+                    callback(address);
+                })
+                .catch((error) => {
+                    console.log('error getting looking up cash account');
+                    callback(false);
+                })
+            return true; // indicates to event listener that responce is asynchronous
             break;
 
         case 'transactions':

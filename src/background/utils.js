@@ -3,11 +3,13 @@ require("babel-polyfill");
 import { Address } from 'bitbox-sdk/lib/Address';
 import { Socket } from 'bitbox-sdk/lib/Socket';
 import { Price } from 'bitbox-sdk/lib/Price';
+import { CashAccounts } from 'bitbox-sdk/lib/CashAccounts';
 
 const browser = chrome || browser;
 
 const bitboxAddress = new Address();
 const bitboxPrice = new Price();
+const bitboxCashAccounts = new CashAccounts();
 
 let price = 0;
 
@@ -47,6 +49,25 @@ export function firstInstall() {
         browser.tabs.create({ url: 'https://sterlingbeason.github.io/SnappyCash/installed.html' });
     } catch(error) {
         console.log('error opening installed landing page', error);
+    }
+}
+
+export async function lookupCashAccount(cashAccount) {
+    try {
+        let cashAccountParts = cashAccount.split('#');
+        console.log(cashAccountParts);
+        let response = await bitboxCashAccounts.lookup(cashAccountParts[0], parseInt(cashAccountParts[1]));
+        console.log(response);
+        return response.information.payment[0].address;
+    } catch (error) {
+        console.log(typeof error);
+        if(typeof error === "object" && error.hasOwnProperty('error') && error.error.match(/No account/i)) {
+            // assume invalid/unregistered Cash Account
+            console.log(cashAccount, 'CASH ACCOUNT DOESN\'T EXIST //');
+        } else {
+            console.log(error);
+        }
+        return false;
     }
 }
 
