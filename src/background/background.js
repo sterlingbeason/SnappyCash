@@ -1,6 +1,6 @@
 require("babel-polyfill");
 
-import { firstInstall, convertToLegacy, startTransactionSocket, updatePrice, lookupCashAccount } from './utils.js';
+import { firstInstall, convertToLegacy, startTransactionSocket, updatePrice, lookupCashAccount, onUpdate } from './utils.js';
 
 const browser = chrome || browser;
 
@@ -17,7 +17,9 @@ let bchPrice = {
 browser.runtime.onInstalled.addListener(function(details){
     console.log(`Details reason: ${details.reason}`);
     if(details.reason === 'install') {
-            firstInstall();
+        firstInstall();
+    } else if(details.reason === 'update') {
+        onUpdate();
     }
 });
 
@@ -61,8 +63,8 @@ browser.runtime.onMessage.addListener((msg, sender, callback) => {
             break;
         
         case 'cashaccount':
-            let potentialCashAccount = msg.cashacount;
-            console.log('cashaccount?', potentialCashAccount);
+            let potentialCashAccount = msg.cashaccount;
+
             lookupCashAccount(potentialCashAccount)
                 .then((address) => {
                     callback(address);

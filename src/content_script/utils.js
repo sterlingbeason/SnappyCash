@@ -42,9 +42,14 @@ function updateBadgeValue() {
     }
 }
 
+/**
+ * Send potential Cash Account to background for validation.
+ * @param {string} cashAccount 
+ * @returns Promise
+ */
 function getCashAccountAddress(cashAccount) {
     return new Promise(function(resolve, reject) {
-        browser.runtime.sendMessage({action: 'cashaccount', cashacount: cashAccount}, (address) => {
+        browser.runtime.sendMessage({action: 'cashaccount', cashaccount: cashAccount}, (address) => {
             resolve(address);
         });
     });
@@ -306,11 +311,36 @@ function testNodeForAddress(node) {
     return;
 }
 
+/**
+ * @private
+ * Append found object to 'found' list. Initiate convertion to text node and set found obj's option node.
+ * @param {textNode} node textNode that contains found address
+ * @param {object} result Found address/cash account object
+ */
 async function registerFoundObject(node, result) {
-    found.push(result);
-    const createdNode = convertTextNode(node, result);
+    // if potential Cash Account then Lookup
+    if(result.type === 'cash-account') {
+        getCashAccountAddress(result.cashAccount)
+            .then((address) => {
+                // check Cash Account address lookup was successful
+                if(address) {
+                    // lookup successful
+                    result.address = address; // update address property
 
-    setFoundObjectOptionsNode(node, createdNode);
+                    found.push(result);
+                    const createdNode = convertTextNode(node, result);
+
+                    setFoundObjectOptionsNode(node, createdNode);
+                }
+            });
+    } else {
+        // assume cash address
+        found.push(result);
+        const createdNode = convertTextNode(node, result);
+
+        setFoundObjectOptionsNode(node, createdNode);
+    }
+    
 }
 
 /**
@@ -340,27 +370,7 @@ export async function findAndConvert() {
             if(hasNodeBeenConverted(node) === false) {
                 let result = testNodeForAddress(node);
                 if(result) {
-                    // async function to accomodate Cash Account lookup
-                    (async (found, node) => {
-                        // if potential Cash Account then Lookup
-                        // BROKEN
-                        if(result.type === 'cash-account') {
-                            getCashAccountAddress(result.cashAccount)
-                                .then((address) => {
-                                    console.log('done cash account check', result.cashAccount, '=', address);
-                                    
-                                    // check Cash Account address lookup was successful
-                                    if(address) {
-                                        // lookup successful
-                                        result.address = address; // update address property
-
-                                        registerFoundObject(node, result)
-                                    }
-                                });
-                        } else {
-                            registerFoundObject(node, result)
-                        }
-                    })(found, node);
+                    registerFoundObject(node, result);
                 }
             }
         }
