@@ -12,7 +12,17 @@ let url = new URL(location);
 
 // get settings and run main
 browser.storage.local.get('settings', async function(data) {
-    settings = data.settings;
+    // check that settings is defined. First install run will not be defined.
+    try {
+        settings = data.settings;
+    } catch(error) {
+        console.log(error);
+        // assumed first install before storage has been set. set mock min settings
+        settings = {
+            integrateBadger: true
+        }
+    }
+
     shareBadgerSetting(settings.integrateBadger); // add Badger Wallet setting to utils.js scope
 
     await main();
@@ -88,7 +98,7 @@ async function main() {
             
             document.addEventListener('mouseup', function(e) {
                 let selection = window.getSelection();
-                if(selection.type === 'Range' && selection.anchorNode === selection.focusNode && Math.abs(selection.anchorOffset - selection.focusOffset) > 35) { // 35 is arbitrary to quickly filter selection shorter than address length
+                if(selection.type === 'Range' && selection.anchorNode === selection.focusNode && Math.abs(selection.anchorOffset - selection.focusOffset) > 5) { // 5 is arbitrary to quickly filter selection shorter than address length
                     checkSelection(selection); // checks and converts if address found
                 }
             });
