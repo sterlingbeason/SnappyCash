@@ -3,50 +3,165 @@ require("babel-polyfill");
 import { Address } from 'bitbox-sdk/lib/Address';
 import { Socket } from 'bitbox-sdk/lib/Socket';
 import { Price } from 'bitbox-sdk/lib/Price';
+import { CashAccounts } from 'bitbox-sdk/lib/CashAccounts';
 
 const browser = chrome || browser;
 
 const bitboxAddress = new Address();
 const bitboxPrice = new Price();
+const bitboxCashAccounts = new CashAccounts();
 
 let price = 0;
 
+const initialStorage = {
+    settings: {
+        convertAuto: true, // whether to convert bch addresses on page load
+        convertSelection: true, // whether to watch selections for bch addresses to convert
+        integrateBadger: true, // whether to include badger option in conversion
+        // disable extension on these (sub)domains
+        ignoreDomains: [
+            "explorer.bitcoin.com",
+            "blockchair.com",
+            "blockexplorer.com",
+            "bitinfocharts.com"
+        ]
+    },
+    cashAccounts: {
+        known: {}, // previously queried
+        invalid: [] // unregistered strings matchings cash account format
+    }
+}
+
 /**
- * Save settings object to extension local storage.
- * @param {object} settings object with all settings
+ * Save data object to extension local storage.
+ * @param {object} data object with all key value pair
  */
-export function setSettings(settings) {
-    browser.storage.local.set(settings, function() {
-        console.log('initialized settings');
+export function setStorage(data) {
+    browser.storage.local.set(data, function() {
+        console.log('set ', Object.keys(data)[0]);
     });
+}
+
+/**
+ * Called on extension update. Merge existing settings with new? default settings and set.
+ */
+export async function onUpdate() {
+    // get settings from storage
+    let dataSettings = await new Promise((resolve, reject) => {
+        browser.storage.local.get('settings', function(data) {
+            resolve(data);
+        });
+    });
+
+    // merge storage settings with defaults
+    let mergedSettings = {
+        settings: {...initialStorage.settings, ...dataSettings.settings}
+    }
+    setStorage(mergedSettings);
+
+    // get Cash Accounts cache from storage
+    let dataCACache = await new Promise((resolve, reject) => {
+        browser.storage.local.get('cashAccounts', function(data) {
+            resolve(data);
+        });
+    });
+
+    // merge storage Cash Accounts cache with defaults
+    let mergedCACache = {
+        cashAccounts: {...initialStorage.cashAccounts, ...dataCACache.cashAccounts}
+    };
+    setStorage(mergedCACache);
 }
 
 /**
  * Called on extension's first installation complete, sets default settings.
  */
 export function firstInstall() {
-    const initialSettings = {
-        settings: {
-            convertAuto: true, // whether to convert bch addresses on page load
-            convertSelection: true, // whether to watch selections for bch addresses to convert
-            integrateBadger: true, // whether to include badger option in conversion
-            // disable extension on these (sub)domains
-            ignoreDomains: [
-                "explorer.bitcoin.com",
-                "blockchair.com",
-                "blockexplorer.com",
-                "bitinfocharts.com"
-            ]
-        }
-    }
-
-    setSettings(initialSettings);
+    setStorage(initialStorage);
 
     // open installed landing page
     try {
         browser.tabs.create({ url: 'https://sterlingbeason.github.io/SnappyCash/installed.html' });
     } catch(error) {
         console.log('error opening installed landing page', error);
+    }
+}
+
+/**
+ * @private
+ * Store Cash Account with address or as invalid/unregistered Cash Account formatted string.
+ * @param {Boolean} isCashAccount 
+ * @param {String} address 
+ */
+async function recordCashAccount(isCashAccount, cashAccount = null, address = null) {
+    let data = await new Promise((resolve, reject) => {
+        browser.storage.local.get('cashAccounts', async function(data) {
+            resolve(data);
+        });
+    });
+
+    if(isCashAccount) {
+        // add cash account string to known accounts
+        data.cashAccounts.known[cashAccount] = {
+            address: address,
+            time_queried: Date.now()
+        }
+    } else {
+        // add cash account string to known invalid/unregistered accounts
+        data.cashAccounts.invalid.push(cashAccount);
+    }
+
+    browser.storage.local.set(data, function() {
+        console.log('Cash Account local registry updated.')
+    });
+}
+
+/**
+ * Lookup Cash Account for payment address. Notify of inregistered cash account formatted strings. First check previously seen format matched strings.
+ * @param {String} cashAccount 
+ */
+export async function lookupCashAccount(cashAccount) {
+    cashAccount = cashAccount.toLowerCase(); // normalize cash account strings
+
+    // lookup from storage
+    let data = await new Promise((resolve, reject) => {
+        browser.storage.local.get('cashAccounts', async function(data) {
+            resolve(data);
+        });
+    });
+
+    if(data.cashAccounts.known.hasOwnProperty(cashAccount)) {
+        // Cash Account previously lookedup
+        console.log(cashAccount, 'previously known');
+        return data.cashAccounts.known[cashAccount].address;
+
+    } else if(data.cashAccounts.invalid.indexOf(cashAccount) >= 0) {
+        // ignore cash account string. Previously verified as unregistered
+        console.log(cashAccount, 'previously marked invalid');
+        return false;
+    }
+
+
+    // lookup with online resource
+    try {
+        let cashAccountParts = cashAccount.split('#');
+        let response = await bitboxCashAccounts.lookup(cashAccountParts[0], parseInt(cashAccountParts[1]));
+        let address = response.information.payment[0].address;
+
+        recordCashAccount(true, cashAccount, address);
+
+        return address;
+
+    } catch (error) {
+
+        if(typeof error === "object" && error.hasOwnProperty('error') && error.error.match(/No account/i)) {
+            // assume invalid/unregistered Cash Account
+            recordCashAccount(false, cashAccount);
+        } else {
+            // unknown error
+            console.log(error);
+        }
+        return false;
     }
 }
 
@@ -150,7 +265,7 @@ function processTransaction(transaction, transactionSubscribers) {
 export function startTransactionSocket(transactionSubscribers, onClose) {
     let socket = new Socket({callback: () => {
         console.log('connected');
-    }, restURL: 'https://rest.bitcoin.com'});
+    }, wsURL: 'wss://ws.bitcoin.com'});
 
     socket.listen('transactions', (message) => {
         let transaction = JSON.parse(message);
