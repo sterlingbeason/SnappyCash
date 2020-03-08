@@ -1,6 +1,10 @@
 # Snappy Cash
-Browser extension that enhances plain-text Bitcoin Cash addresses with QR codes and integrated Badger Wallet widgets
+Browser extension that enhances plain-text Bitcoin Cash addresses and Cash Accounts with QR codes and integrated Badger Wallet widgets
 [Youtube Video](https://www.youtube.com/watch?v=MRCQI_juVLk)
+
+## Installation
+* [Chrome](https://chrome.google.com/webstore/detail/snappy-cash/lfalmidbffpgbpbjckichdnemaoenemj)
+* [Firefox](https://addons.mozilla.org/en-US/firefox/addon/snappy-cash/)
 
 ## Build/Run
 ### Requirements
@@ -30,4 +34,7 @@ Load extension into your browser:
 * [Bitcoin.com](https://developer.bitcoin.com) developer packages
 
 ## Tipping
+
+SnappyCash#61881
+
 bitcoincash:qqxgjv4erfayzegy3h9p7dv4jja3jf6cs5ygtgk7tr
