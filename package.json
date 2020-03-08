@@ -1,7 +1,7 @@
 {
   "name": "snappy-cash",
-  "version": "0.0.1",
-  "description": "Enhances Bitcoin Cash plain-text addresses on page with scannable QR codes for desktop tipping via mobile wallets and integrated Badger Wallet widgets.",
+  "version": "0.1.0",
+  "description": "Enhances Bitcoin Cash addresses and Cash Accounts with QR codes for tipping via mobile wallets and Badger Wallet widgets.",
   "private": true,
   "main": "app.js",
   "scripts": {
