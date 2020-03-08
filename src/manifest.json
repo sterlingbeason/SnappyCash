@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Snappy Cash",
-  "description": "Enhances Bitcoin Cash plain-text addresses with QR codes for tipping via mobile wallets and integrated Badger Wallet widgets.",
-  "version": "0.0.1",
+  "description": "Enhances Bitcoin Cash addresses and Cash Accounts with QR codes for tipping via mobile wallets and Badger Wallet widgets.",
+  "version": "0.1.0",
   "homepage_url": "https://github.com/sterlingbeason/SnappyCash",
   "content_scripts": [
     {
